@@ -129,7 +129,7 @@ while True:
         info = [
             ("Tracker", args["tracker"]),
             ("Success", "Yes" if success else "No"),
-            ("FPS", "{:.2f}".format(fps.fps())),
+            # ("FPS", "{:.2f}".format(fps.fps())),
         ]
 
         # loop over the info tuples and draw them on our frame
