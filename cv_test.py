@@ -24,18 +24,20 @@ while(True):
 		minSize=(30, 30)
 		#flags = cv2.CASCADE_SCALE_IMAGE
 	)
-	global out
-	print("Found {0} faces!".format(len(faces)))
+	#global out
+	#print("Found {0} faces!".format(len(faces)))
 
 	# Draw a rectangle around the faces
 	for (x, y, w, h) in faces:
 		mask = np.zeros(np.shape(frame), dtype=np.uint8)
 		mask = cv2.rectangle(mask, (x, y), (x+w, y+h), (255, 255, 255), -1)
 		blurred = cv2.GaussianBlur(frame, (51,51), 11)
-		out = np.where(mask==np.array([255, 255, 255]), blurred, frame)
+		frame = np.where(mask==np.array([255, 255, 255]), blurred, frame)
 
 	# Display the resulting frame
-	cv2.imshow('frame', out)
+	cv2.imshow('frame', frame)
+
+	# press q to exit
 	if cv2.waitKey(1) & 0xFF == ord('q'):
 		break
 
