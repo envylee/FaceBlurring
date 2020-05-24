@@ -7,10 +7,10 @@
 ## Usage
 
 1. run `python3 setup.py` to setup the database using sqlite3
-2. run `python3 recordface_webcam.py [-v] [video_path]` to obtain the face for the training for all faces, file will stored in dataset directory
+2. run `python3 recordface.py [-v] [video_path]` to obtain the face for the training for all faces, file will stored in dataset directory
 3. run `python3 trainer.py` to train the LBPH face recognizer
-4. run `python3 detector_webcam.py [-v] [video_path]` to do asynchronous face recognition
-5. run `python3 detector_webcam.py -b [-v] [video_path]` to do asynchronous face blurring
+4. run `python3 detector.py [-v] [video_path]` to do asynchronous face recognition
+5. run `python3 detector.py -b [-v] [video_path]` to do asynchronous face blurring
 
 
 
