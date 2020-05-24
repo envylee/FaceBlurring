@@ -12,6 +12,10 @@ import imutils
 conn = sqlite3.connect('database.db')
 db = conn.cursor()
 
+# Declare constant
+RECT_AREA_REDUCE = 8
+CONF_LEVEL = 75
+
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-v", "--video", type=str,
@@ -20,6 +24,7 @@ ap.add_argument("-t", "--tracker", type=str, default="kcf",
     help="OpenCV object tracker type")
 ap.add_argument("-b", "--blur", help="blur face with flag", action="store_true")
 ap.add_argument("-d", "--debug", help="debug mode", action="store_true")
+ap.add_argument("-s", "--stat", help="show stat on the window", action="store_true")
 args = vars(ap.parse_args())
 
 # extract the OpenCV version info
@@ -112,13 +117,14 @@ while vStream.isOpened():
             id_, conf = recognizer.predict(roiGray)
             print(id_, conf)
 
-            # If recognized face has enough confident (<= 70),
+            # If recognized face has enough confident defined by CONF_LEVEL,
             # retrieve the user name from database,
             # draw a rectangle around the face,
             # print the name of the user
-            if conf <= 70:
+            if conf <= CONF_LEVEL:
                 faces_location[id_] = (x, y, w, h)
-                cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                if args.get("debug", False):
+                    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
                 # retrieve user name from database
                 db.execute("SELECT `name` FROM `users` WHERE `id` = (?);", (id_,))
                 result = db.fetchall()
@@ -132,10 +138,12 @@ while vStream.isOpened():
 
                 lastUnlockedAt = time.time()
                 print("[Predict] " + str(id_) + ":" + name + " (" + str(conf) + ")")
-                cv2.putText(frame, name, (x+2,y+h-5), font, 1, (150,255,0), 2)
+                if args.get("debug", False):
+                    cv2.putText(frame, name, (x+2,y+h-5), font, 1, (150,255,0), 2)
             else:
                 #confident level is not high enough
-                cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
+                if args.get("debug", False):
+                    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
                 print("[Fail] " + str(conf))
 
     #KCF object tracking update by faces_location list
@@ -157,14 +165,17 @@ while vStream.isOpened():
         # check to see if the tracking was a success
         if success:
             (x, y, w, h) = [int(v) for v in box]
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
         # with blur flag enable
-        if args.get("blur", False):
+        if args.get("blur", False) and success:
             mask = np.zeros(np.shape(frame), dtype=np.uint8)
-            mask = cv2.rectangle(mask, (x, y), (x+w, y+h), (255, 255, 255), -1)
+            mask = cv2.rectangle(mask, (x+RECT_AREA_REDUCE, y+RECT_AREA_REDUCE),
+                (x+w-RECT_AREA_REDUCE, y+h-RECT_AREA_REDUCE),
+                (255, 255, 255), -1)
             blurred = cv2.GaussianBlur(frame, (51,51), 11)
             frame = np.where(mask==np.array([255, 255, 255]), blurred, frame)
+        elif success:
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
         # update the FPS counter
         fps.update()
@@ -177,12 +188,12 @@ while vStream.isOpened():
             ("Success", "Yes" if success else "No"),
             ("FPS", "{:.2f}".format(fps.fps())),
         ]
-
-        # loop over the info tuples and draw them on our frame
-        for (i, (k, v)) in enumerate(info):
-            text = "{}: {}".format(k, v)
-            cv2.putText(frame, text, (10, H - ((i * 20) + 20)),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+        if args.get("stat", False):
+            # loop over the info tuples and draw them on our frame
+            for (i, (k, v)) in enumerate(info):
+                text = "{}: {}".format(k, v)
+                cv2.putText(frame, text, (10, H - ((i * 20) + 20)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
 
     cv2.imshow("Face Recognizer", frame)
