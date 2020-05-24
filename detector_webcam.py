@@ -18,6 +18,8 @@ ap.add_argument("-v", "--video", type=str,
     help="path to input video file")
 ap.add_argument("-t", "--tracker", type=str, default="kcf",
     help="OpenCV object tracker type")
+ap.add_argument("-b", "--blur", help="blur face with flag", action="store_true")
+ap.add_argument("-d", "--debug", help="debug mode", action="store_true")
 args = vars(ap.parse_args())
 
 # extract the OpenCV version info
@@ -155,8 +157,14 @@ while vStream.isOpened():
         # check to see if the tracking was a success
         if success:
             (x, y, w, h) = [int(v) for v in box]
-            cv2.rectangle(frame, (x, y), (x + w, y + h),
-                (0, 255, 0), 2)
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+        # with blur flag enable
+        if args.get("blur", False):
+            mask = np.zeros(np.shape(frame), dtype=np.uint8)
+            mask = cv2.rectangle(mask, (x, y), (x+w, y+h), (255, 255, 255), -1)
+            blurred = cv2.GaussianBlur(frame, (51,51), 11)
+            frame = np.where(mask==np.array([255, 255, 255]), blurred, frame)
 
         # update the FPS counter
         fps.update()
