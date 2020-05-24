@@ -21,6 +21,9 @@ LEE, Pak Yin: face recognition
 
 LAU, Tsz Yui: object tracking
 
+Project fork from:
+https://github.com/mickey9801/opencv_facerecognition
+
 
 
 
